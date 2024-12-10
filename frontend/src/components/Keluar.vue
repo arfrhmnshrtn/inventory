@@ -5,23 +5,140 @@ import { initFlowbite } from "flowbite";
 // initialize components based on data attribute selectors
 onMounted(() => {
   initFlowbite();
+  fetchData();
+  dataBarangMasuk();
 });
 
 import { ref, computed } from "vue";
 
 // Data dummy
-const db = ref([
-  { id: 1, nama: "Laptop", stok: 20, harga: 10000000 },
-  { id: 2, nama: "Mouse", stok: 50, harga: 200000 },
-  { id: 3, nama: "Keyboard", stok: 30, harga: 500000 },
-  { id: 4, nama: "Monitor", stok: 15, harga: 3000000 },
-  { id: 5, nama: "Printer", stok: 10, harga: 1500000 },
-  { id: 6, nama: "Speaker", stok: 25, harga: 700000 },
-  { id: 7, nama: "Headset", stok: 40, harga: 350000 },
-  { id: 8, nama: "Webcam", stok: 18, harga: 800000 },
-  { id: 9, nama: "Tablet", stok: 12, harga: 5000000 },
-  { id: 10, nama: "Smartphone", stok: 30, harga: 6000000 },
-]);
+const db = ref([]);
+const listBarang = ref([]);
+const showModal = ref(false);
+
+const data = ref({
+  kode_barang: "",
+  nama_barang: "",
+  jumlah: "",
+  harga: "",
+});
+
+async function fetchData() {
+  try {
+    const response = await fetch("http://localhost:3000/api/barangkeluar");
+    const data = await response.json();
+    db.value = data;
+    filterData.value = data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+}
+
+// tambah barang keluar
+async function tambahBarang() {
+  // Validasi input
+  if (
+    !data.value.kode_barang ||
+    !data.value.nama_barang ||
+    !data.value.jumlah ||
+    !data.value.harga
+  ) {
+    alert("Semua field harus diisi!");
+    return;
+  }
+
+  try {
+    // If the item doesn't exist, add a new item
+    const response = await fetch("http://localhost:3000/api/barangkeluar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data.value),
+    });
+
+    const result = await response.json();
+
+    if (result.message === "Barang berhasil ditambahkan") {
+      showModal.value = false;
+
+      // Reset form setelah sukses
+      data.value = {
+        kode_barang: "",
+        nama_barang: "",
+        jumlah: "",
+        harga: "",
+      };
+
+      // Refresh data dari server
+      fetchData();
+    }
+  } catch (error) {
+    console.error("Error saat menambah barang:", error);
+    alert("Terjadi kesalahan saat mengirim data.");
+  }
+}
+
+async function updateBarangKeluar() {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/barangkeluar/${data.value.kode_barang}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data.value),
+      }
+    );
+
+    const result = await response.json();
+
+    if (result.message === "Barang berhasil diperbarui") {
+      alertSuccess.value = true;
+      setTimeout(() => {
+        alertSuccess.value = false;
+      }, 5000);
+      // Reset form setelah menambah barang
+      data.value = {
+        kode_barang: "",
+        nama_barang: "",
+        jumlah: "",
+        harga: "",
+      };
+      // Refresh data dari server
+      fetchData();
+    } else {
+      alert(result.message || "Gagal menambah barang.");
+    }
+  } catch (error) {
+    console.error("Error saat menambah barang:", error);
+    alert("Terjadi kesalahan saat mengirim data.");
+  }
+}
+
+async function dataBarangMasuk() {
+  try {
+    const response = await fetch(`http://localhost:3000/api/databarangmasuk`);
+    const data = await response.json();
+    listBarang.value = data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+}
+
+// Memperbarui barangTerpilih ketika kode barang berubah
+function pilihBarang(kodeBarang) {
+  const barang = listBarang.value.find(
+    (barang) => barang.kode_barang === kodeBarang
+  );
+
+  if (barang) {
+    data.value.kode_barang = barang.kode_barang;
+    data.value.nama_barang = barang.nama_barang;
+    data.value.harga = barang.harga;
+  }
+}
 
 // Data pencarian
 const searchQuery = ref("");
@@ -64,8 +181,7 @@ function goToPage(page) {
     <div class="flex justify-between items-center">
       <div>
         <button
-          data-modal-target="crud-modal"
-          data-modal-toggle="crud-modal"
+          @click="showModal = true"
           class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
         >
           + Tambah Barang Keluar
@@ -97,7 +213,8 @@ function goToPage(page) {
           >
             <th class="py-3 px-4 border-b border-gray-300">No</th>
             <th class="py-3 px-4 border-b border-gray-300">Kode Barang</th>
-            <th class="py-3 px-4 border-b border-gray-300">Stok</th>
+            <th class="py-3 px-4 border-b border-gray-300">Nama Barang</th>
+            <th class="py-3 px-4 border-b border-gray-300">Jumlah</th>
             <th class="py-3 px-4 border-b border-gray-300">Harga</th>
             <th class="py-3 px-4 border-b border-gray-300 text-center">Aksi</th>
           </tr>
@@ -112,10 +229,13 @@ function goToPage(page) {
               {{ (currentPage - 1) * itemsPerPage + index + 1 }}
             </td>
             <td class="py-2 px-4 border-b border-gray-200 text-gray-700">
-              {{ item.nama }}
+              {{ item.kode_barang }}
             </td>
             <td class="py-2 px-4 border-b border-gray-200 text-gray-700">
-              {{ item.stok }}
+              {{ item.nama_barang }}
+            </td>
+            <td class="py-2 px-4 border-b border-gray-200 text-gray-700">
+              {{ item.jumlah }}
             </td>
             <td class="py-2 px-4 border-b border-gray-200 text-gray-700">
               {{
@@ -176,15 +296,13 @@ function goToPage(page) {
     </div>
 
     <!-- Modal -->
-    <div>
+    <div
+      v-if="showModal"
+      class="fixed inset-0 flex justify-center items-center bg-gray-500 bg-opacity-50"
+    >
       <div>
         <!-- Main modal -->
-        <div
-          id="crud-modal"
-          tabindex="-1"
-          aria-hidden="true"
-          class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full"
-        >
+        <div class="rounded-lg p-4 w-full max-w-md">
           <div class="relative p-4 w-full max-w-md max-h-full">
             <!-- Modal content -->
             <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
@@ -193,12 +311,12 @@ function goToPage(page) {
                 class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600"
               >
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  Tambah Barang Masuk
+                  Tambah Barang Kelaur
                 </h3>
                 <button
                   type="button"
                   class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                  data-modal-toggle="crud-modal"
+                  @click="showModal = false"
                 >
                   <svg
                     class="w-3 h-3"
@@ -219,20 +337,59 @@ function goToPage(page) {
                 </button>
               </div>
               <!-- Modal body -->
-              <form class="p-4 md:p-5">
+              <form class="p-4 md:p-5" @submit.prevent="tambahBarang">
                 <div class="grid gap-4 mb-4 grid-cols-2">
                   <div class="col-span-2">
                     <label
-                      for="name"
+                      for="category"
                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >Name</label
+                      >Kode Barang</label
+                    >
+                    <select
+                      id="category"
+                      @change="pilihBarang($event.target.value)"
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                    >
+                      <option
+                        v-for="item in listBarang"
+                        :key="item.id"
+                        selected=""
+                        :value="item.kode_barang"
+                      >
+                        {{ item.kode_barang }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-span-2 sm:col-span-1">
+                    <label
+                      for="price"
+                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >Nama Barang</label
                     >
                     <input
                       type="text"
-                      name="name"
-                      id="name"
+                      name="price"
+                      id="price"
+                      v-model="data.nama_barang"
                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Type product name"
+                      placeholder="Nama Barang"
+                      required=""
+                      disabled
+                    />
+                  </div>
+                  <div class="col-span-2 sm:col-span-1">
+                    <label
+                      for="price"
+                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >Jumlah</label
+                    >
+                    <input
+                      type="number"
+                      name="price"
+                      v-model="data.jumlah"
+                      id="price"
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      placeholder="Jumlah"
                       required=""
                     />
                   </div>
@@ -240,46 +397,18 @@ function goToPage(page) {
                     <label
                       for="price"
                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >Price</label
+                      >Harga</label
                     >
                     <input
                       type="number"
                       name="price"
                       id="price"
+                      v-model="data.harga"
+                      disabled
                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       placeholder="$2999"
                       required=""
                     />
-                  </div>
-                  <div class="col-span-2 sm:col-span-1">
-                    <label
-                      for="category"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >Category</label
-                    >
-                    <select
-                      id="category"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                    >
-                      <option selected="">Select category</option>
-                      <option value="TV">TV/Monitors</option>
-                      <option value="PC">PC</option>
-                      <option value="GA">Gaming/Console</option>
-                      <option value="PH">Phones</option>
-                    </select>
-                  </div>
-                  <div class="col-span-2">
-                    <label
-                      for="description"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >Product Description</label
-                    >
-                    <textarea
-                      id="description"
-                      rows="4"
-                      class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write product description here"
-                    ></textarea>
                   </div>
                 </div>
                 <button

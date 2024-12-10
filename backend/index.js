@@ -14,7 +14,7 @@ app.use(
   })
 );
 
-// GET route untuk mendapatkan semua data barang
+// GET route untuk mendapatkan semua data barang masuk
 app.get("/api/inventory", (req, res) => {
   const sql = "SELECT * FROM barangmasuk";
   db.query(sql, (err, results) => {
@@ -92,6 +92,80 @@ app.delete("/api/inventory/:kode_barang", (req, res) => {
       return res.status(500).json({ error: "Gagal menghapus barang" });
     }
     res.json({ message: "Barang berhasil dihapus" });
+  });
+});
+
+// barang keluar
+
+// GET route untuk mendapatkan semua data barang keluar
+app.get("/api/barangkeluar", (req, res) => {
+  const sql = "SELECT * FROM barangkeluar";
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error mendapatkan data:", err.message);
+      return res.status(500).json({ error: "Gagal mendapatkan data" });
+    }
+    res.json(results);
+  });
+});
+
+// POST route untuk menambahkan data barang keluar
+app.post("/api/barangkeluar", (req, res) => {
+  const { kode_barang, nama_barang, jumlah, harga } = req.body;
+
+  // Validasi sederhana
+  if (!kode_barang || !nama_barang || jumlah == null || harga == null) {
+    return res.status(400).json({ error: "Semua data wajib diisi" });
+  }
+
+  const sql =
+    "INSERT INTO barangkeluar (kode_barang, nama_barang, jumlah, harga) VALUES (?, ?, ?, ?)";
+  db.query(sql, [kode_barang, nama_barang, jumlah, harga], (err, result) => {
+    if (err) {
+      console.error("Error menambahkan data:", err.message);
+      return res.status(500).json({ error: "Gagal menambahkan barang" });
+    }
+    res.status(201).json({ message: "Barang berhasil ditambahkan" });
+  });
+});
+
+// Update jumlah barang keluar
+app.put("/api/barangkeluar/:kode_barang", (req, res) => {
+  const { kode_barang } = req.params;
+  const { jumlah } = req.body;
+
+  // Ensure jumlah is provided
+  if (jumlah === undefined || jumlah === null) {
+    return res.status(400).json({ error: "Jumlah harus diisi!" });
+  }
+
+  // SQL query to update jumlah
+  const sql = "UPDATE barangkeluar SET jumlah = ? WHERE kode_barang = ?";
+
+  db.query(sql, [jumlah, kode_barang], (err, result) => {
+    if (err) {
+      console.error("Error saat memperbarui barang:", err.message);
+      return res.status(500).json({ error: "Gagal memperbarui barang" });
+    }
+
+    // Check if any row was affected (item was updated)
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Barang tidak ditemukan" });
+    }
+
+    res.json({ message: "Jumlah barang berhasil diperbarui" });
+  });
+});
+
+// data barang masuk
+app.get("/api/databarangmasuk", (req, res) => {
+  const sql = "SELECT kode_barang, nama_barang, harga FROM barangmasuk";
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error mendapatkan data:", err.message);
+      return res.status(500).json({ error: "Gagal mendapatkan data" });
+    }
+    res.json(results);
   });
 });
 

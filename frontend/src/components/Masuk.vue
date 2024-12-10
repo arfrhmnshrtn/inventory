@@ -296,7 +296,7 @@ function printPDF() {
             <th class="py-3 px-4 border-b border-gray-300">No</th>
             <th class="py-3 px-4 border-b border-gray-300">Kode Barang</th>
             <th class="py-3 px-4 border-b border-gray-300">Nama Barang</th>
-            <th class="py-3 px-4 border-b border-gray-300">Stok</th>
+            <th class="py-3 px-4 border-b border-gray-300">Jumlah</th>
             <th class="py-3 px-4 border-b border-gray-300">Harga</th>
             <th class="py-3 px-4 border-b border-gray-300 text-center">Aksi</th>
           </tr>

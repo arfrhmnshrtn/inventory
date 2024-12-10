@@ -10,7 +10,7 @@ function hideSidebar() {
     <!-- Sidebar Kiri -->
     <aside class="w-64 bg-white shadow-md sidebar">
       <div class="p-4">
-        <h1 class="text-3xl font-bold italic text-purple-600">PanjiCell</h1>
+        <h1 class="text-3xl font-bold italic text-purple-600">SasFone</h1>
       </div>
       <nav class="mt-6">
         <ul class="space-y-4">

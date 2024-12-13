@@ -72,7 +72,7 @@ async function getDataKeluar() {
     <!-- info barang -->
     <div class="mt-10 flex flex-wrap gap-10">
       <div class="bg-slate-100 p-3 rounded-lg w-full sm:w-full md:w-[48%]">
-        <h2 class="text-xl mb-3">Barang Masuk Bulan Ini</h2>
+        <h2 class="text-xl mb-3">Barang Masuk</h2>
         <table class="w-full">
           <thead>
             <tr
@@ -109,7 +109,7 @@ async function getDataKeluar() {
       </div>
 
       <div class="bg-slate-100 p-3 rounded-lg w-full sm:w-full md:w-[48%]">
-        <h2 class="text-xl mb-3">Barang Keluar Bulan Ini</h2>
+        <h2 class="text-xl mb-3">Barang Keluar</h2>
         <table class="w-full">
           <thead>
             <tr

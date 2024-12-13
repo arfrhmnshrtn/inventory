@@ -7,14 +7,8 @@ import "jspdf-autotable";
 // Data untuk item
 const db = ref([]);
 const alertSuccess = ref(false);
-const message = ref("");
-
-const data = ref({
-  kode_barang: "",
-  nama_barang: "",
-  stok: "",
-  harga: "",
-});
+const allertMessage = ref("");
+const kodeBarangKeluar = ref([]);
 
 // Data pencarian
 const searchQuery = ref("");
@@ -24,17 +18,29 @@ const filterData = ref([]);
 const showModal = ref(false);
 const isEdit = ref(false); // Status untuk membedakan tambah atau edit
 
+const cekBanyakData = ref(0);
+
+const data = ref({
+  kode_barang: "",
+  nama_barang: "",
+  stok: "",
+  harga: "",
+});
+
 // Inisialisasi Flowbite dan ambil data saat komponen dimuat
 onMounted(() => {
   initFlowbite();
   fetchData();
+  kode_barang_keluar();
 });
 
 // Format angka ke Rupiah
-const rupiah = (number) => {
+const toRupiah = (number) => {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(number);
 };
 
@@ -44,6 +50,7 @@ async function fetchData() {
     const response = await fetch("http://localhost:3000/api/inventory");
     const data = await response.json();
     db.value = data;
+    cekBanyakData.value = data.length;
     filterData.value = data;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -74,6 +81,7 @@ async function tambahBarang() {
     const result = await response.json();
 
     if (result.message === "Barang berhasil ditambahkan") {
+      allertMessage.value = result.message;
       alertSuccess.value = true;
       setTimeout(() => {
         alertSuccess.value = false;
@@ -162,6 +170,7 @@ async function updateBarang() {
     const result = await response.json();
 
     if (result.message === "Barang berhasil diperbarui") {
+      allertMessage.value = result.message;
       alertSuccess.value = true;
       setTimeout(() => {
         alertSuccess.value = false;
@@ -193,6 +202,7 @@ async function deleteBarang(kode_barang) {
     const result = await response.json();
 
     if (result.message === "Barang berhasil dihapus") {
+      allertMessage.value = result.message;
       alertSuccess.value = true;
       setTimeout(() => {
         alertSuccess.value = false;
@@ -216,25 +226,61 @@ function saveBarang() {
   }
 }
 
-// cetak pdf
+//ambil database untuk kode barang kelaur
+async function kode_barang_keluar() {
+  try {
+    const response = await fetch("http://localhost:3000/api/barangkeluar");
+    const data = await response.json();
+    kodeBarangKeluar.value = data.map((item) => item.kode_barang);
+    console.log(kodeBarangKeluar.value);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+}
+
+//filter data berdasarkan kode barang keluar
+function filterBarangKeluar(kode_barang) {
+  const isKodeBarangKeluar = kodeBarangKeluar.value.includes(kode_barang);
+
+  if (isKodeBarangKeluar) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 // Cetak PDF
 function printPDF() {
   const doc = new jsPDF();
+  // Teks yang ingin ditampilkan
+  const text = "Laporan Data Barang Masuk";
+
+  // Lebar halaman
+  const pageWidth = doc.internal.pageSize.width;
+
+  // Hitung lebar teks
+  const textWidth = doc.getTextWidth(text);
+
+  // Hitung posisi X agar teks berada di tengah
+  const xPos = (pageWidth - textWidth) / 2;
+
+  // Tampilkan teks di tengah
+  doc.text(text, xPos, 20);
 
   // Menambahkan judul
   doc.setFontSize(18);
-  doc.text("Laporan Data Barang Masuk", 14, 20);
+  // doc.text("Laporan Data Barang Masuk", 10, 20);
 
   // Menambahkan tabel
   const tableData = filterData.value.map((item) => [
     item.kode_barang,
     item.nama_barang,
     item.stok,
-    item.harga,
+    toRupiah(item.harga),
   ]);
 
   doc.autoTable({
-    head: [["Kode Barang", "Nama Barang", "Stok", "Harga"]],
+    head: [["Kode Barang", "Nama Barang", "Jumlah", "Harga"]],
     body: tableData,
     startY: 30, // Mulai dari posisi vertikal 30
   });
@@ -280,7 +326,7 @@ function printPDF() {
       class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400"
       role="alert"
     >
-      <span class="font-medium italic">{{ message }}</span>
+      <span class="font-medium italic">{{ allertMessage }}</span>
     </div>
 
     <!-- Table -->
@@ -320,7 +366,7 @@ function printPDF() {
               {{ item.stok }}
             </td>
             <td class="py-2 px-4 border-b border-gray-200 text-gray-700">
-              {{ rupiah(item.harga) }}
+              {{ toRupiah(item.harga) }}
             </td>
             <td class="py-2 px-4 border-b border-gray-200 text-center">
               <button
@@ -332,6 +378,7 @@ function printPDF() {
               <button
                 class="px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded"
                 @click="deleteBarang(item.kode_barang)"
+                v-if="filterBarangKeluar(item.kode_barang)"
               >
                 Hapus
               </button>
@@ -341,7 +388,7 @@ function printPDF() {
       </table>
 
       <!-- Pagination -->
-      <div class="flex justify-between items-center mt-5">
+      <div class="flex justify-between items-center mt-5" v-if="cekBanyakData > 10">
         <button
           @click="goToPage(currentPage - 1)"
           :disabled="currentPage === 1"

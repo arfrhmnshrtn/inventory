@@ -1,5 +1,11 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
+
+// Data pencarian
+const searchQuery = ref("");
+const filterData = ref([]);
+
+const cekBanyakData = ref(0);
 
 onMounted(() => {
   getDataMasuk();
@@ -14,6 +20,7 @@ async function getDataMasuk() {
     const response = await fetch(`http://localhost:3000/api/inventory`);
     const data = await response.json();
     listBarangMasuk.value = data;
+    cekBanyakData.value = data.length;
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -34,6 +41,8 @@ const rupiah = (number) => {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(number);
 };
 
@@ -44,14 +53,55 @@ const combinedData = computed(() => {
 
   return dataMasuk.map((item) => ({
     ...item,
-    stok: item.stok - dataKeluar.find((i) => i.kode_barang === item.kode_barang)?.jumlah || item.stok,
+    stok:
+      item.stok -
+        dataKeluar.find((i) => i.kode_barang === item.kode_barang)?.jumlah ||
+      item.stok,
   }));
 });
+
+// Sinkronkan filterData dengan combinedData saat pertama kali dimuat
+watch(
+  combinedData,
+  (newData) => {
+    filterData.value = [...newData];
+  },
+  { immediate: true }
+);
+
+// Fungsi pencarian
+function searchData(value) {
+  searchQuery.value = value;
+
+  if (searchQuery.value === "") {
+    filterData.value = [...combinedData.value];
+    return;
+  }
+
+  filterData.value = combinedData.value.filter((item) => {
+    return item.nama_barang
+      .toLowerCase()
+      .includes(searchQuery.value.toLowerCase());
+  });
+
+  console.log(filterData.value);
+}
 </script>
 
 <template>
   <div class="container mx-auto p-4">
-    <h1 class="text-3xl mb-3 font-bold italic">Data Barang</h1>
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl mb-3 font-bold italic">Data Barang</h1>
+      <div class="flex items-center justify-center p-4">
+        <input
+          type="text"
+          placeholder="Cari..."
+          @input="searchData($event.target.value)"
+          class="w-full max-w-md px-4 py-2 text-sm text-gray-700 placeholder-gray-400 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+    </div>
+
     <div>
       <!-- Table -->
       <table
@@ -70,7 +120,7 @@ const combinedData = computed(() => {
         </thead>
         <tbody>
           <tr
-            v-for="(item, index) in combinedData"
+            v-for="(item, index) in filterData"
             :key="item.id"
             class="hover:bg-gray-50"
           >
@@ -94,7 +144,7 @@ const combinedData = computed(() => {
       </table>
 
       <!-- Pagination -->
-      <div class="flex justify-between items-center mt-5">
+      <div class="flex justify-between items-center mt-5" v-if="cekBanyakData > 10">
         <button
           @click="goToPage(currentPage - 1)"
           :disabled="currentPage === 1"

@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted } from "vue";
 import { initFlowbite } from "flowbite";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 // initialize components based on data attribute selectors
 onMounted(() => {
@@ -16,6 +18,13 @@ const db = ref([]);
 const listBarang = ref([]);
 const showModal = ref(false);
 const isEdit = ref(false); // Status untuk membedakan tambah atau edit
+const alertSuccess = ref(false);
+const allertMessage = ref("");
+const cekBanyakData = ref(0);
+
+// Data pencarian
+const searchQuery = ref("");
+const filterData = ref([]);
 
 const data = ref({
   kode_barang: "",
@@ -24,11 +33,21 @@ const data = ref({
   harga: "",
 });
 
+// Format angka ke Rupiah
+const toRupiah = (number) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(number);
+};
 async function fetchData() {
   try {
     const response = await fetch("http://localhost:3000/api/barangkeluar");
     const data = await response.json();
     db.value = data;
+    cekBanyakData.value = data.length;
     filterData.value = data;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -62,6 +81,11 @@ async function tambahBarang() {
 
     if (result.message === "Barang berhasil ditambahkan") {
       showModal.value = false;
+      alertSuccess.value = true;
+      allertMessage.value = result.message;
+      setTimeout(() => {
+        alertSuccess.value = false;
+      }, 5000);
 
       // Reset form setelah sukses
       data.value = {
@@ -135,9 +159,13 @@ function updateData() {
   )
     .then((response) => response.json())
     .then((result) => {
-      console.log(result);
       isEdit.value = false;
       if (result.message === "Barang berhasil diperbarui") {
+        alertSuccess.value = true;
+        allertMessage.value = result.message;
+        setTimeout(() => {
+          alertSuccess.value = false;
+        }, 5000);
         showModal.value = false;
         fetchData();
       } else {
@@ -163,6 +191,11 @@ function deleteItem(kode_barang) {
     .then((result) => {
       console.log(result);
       if (result.message === "Barang berhasil dihapus") {
+        alertSuccess.value = true;
+        allertMessage.value = result.message;
+        setTimeout(() => {
+          alertSuccess.value = false;
+        }, 5000);
         fetchData();
       } else {
         alert("Gagal menghapus data!");
@@ -174,17 +207,20 @@ function deleteItem(kode_barang) {
     });
 }
 
-// Data pencarian
-const searchQuery = ref("");
-const filterData = ref([...db.value]);
-
 // Fungsi pencarian
 function searchData(value) {
   searchQuery.value = value;
+
+  if (searchQuery.value === "") {
+    filterData.value = [...db.value];
+    return;
+  }
+
   filterData.value = db.value.filter((item) => {
-    return item.nama.toLowerCase().includes(searchQuery.value.toLowerCase());
+    return item.nama_barang
+      .toLowerCase()
+      .includes(searchQuery.value.toLowerCase());
   });
-  console.log(filterData.value);
 }
 
 // Pagination setup
@@ -207,6 +243,45 @@ function goToPage(page) {
     currentPage.value = page;
   }
 }
+// Cetak PDF
+function printPDF() {
+  const doc = new jsPDF();
+  // Teks yang ingin ditampilkan
+  const text = "Laporan Data Barang Masuk";
+
+  // Lebar halaman
+  const pageWidth = doc.internal.pageSize.width;
+
+  // Hitung lebar teks
+  const textWidth = doc.getTextWidth(text);
+
+  // Hitung posisi X agar teks berada di tengah
+  const xPos = (pageWidth - textWidth) / 2;
+
+  // Tampilkan teks di tengah
+  doc.text(text, xPos, 20);
+
+  // Menambahkan judul
+  doc.setFontSize(18);
+  // doc.text("Laporan Data Barang Masuk", 10, 20);
+
+  // Menambahkan tabel
+  const tableData = filterData.value.map((item) => [
+    item.kode_barang,
+    item.nama_barang,
+    item.jumlah,
+    toRupiah(item.harga),
+  ]);
+
+  doc.autoTable({
+    head: [["Kode Barang", "Nama Barang", "Jumlah", "Harga"]],
+    body: tableData,
+    startY: 30, // Mulai dari posisi vertikal 30
+  });
+
+  // Menampilkan PDF di browser
+  doc.output("dataurlnewwindow");
+}
 </script>
 
 <template>
@@ -222,6 +297,7 @@ function goToPage(page) {
         </button>
         <button
           class="bg-green-500 hover:bg-green-600 ml-3 text-white py-2 px-4 rounded"
+          @click="printPDF"
         >
           Cetak Laporan
         </button>
@@ -234,6 +310,15 @@ function goToPage(page) {
           class="w-full max-w-md px-4 py-2 text-sm text-gray-700 placeholder-gray-400 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
+    </div>
+
+    <!-- Success Alert -->
+    <div
+      v-if="alertSuccess"
+      class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400"
+      role="alert"
+    >
+      <span class="font-medium italic">{{ allertMessage }}</span>
     </div>
 
     <div>
@@ -272,12 +357,7 @@ function goToPage(page) {
               {{ item.jumlah }}
             </td>
             <td class="py-2 px-4 border-b border-gray-200 text-gray-700">
-              {{
-                new Intl.NumberFormat("id-ID", {
-                  style: "currency",
-                  currency: "IDR",
-                }).format(item.harga)
-              }}
+              {{ toRupiah(item.harga) }}
             </td>
             <td class="py-2 px-4 border-b border-gray-200 text-center">
               <button
@@ -298,7 +378,7 @@ function goToPage(page) {
       </table>
 
       <!-- Pagination -->
-      <div class="flex justify-between items-center mt-4">
+      <div class="flex justify-between items-center mt-4" v-if="cekBanyakData > 10">
         <button
           @click="goToPage(currentPage - 1)"
           :disabled="currentPage === 1"

@@ -1,173 +1,208 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>API Documentation</title>
+    <title>API Documentation - Inventory Management</title>
     <style>
       body {
         font-family: Arial, sans-serif;
         line-height: 1.6;
         margin: 0;
         padding: 0;
-        background-color: #f4f4f4;
       }
       header {
-        background-color: #333;
+        background: #007bff;
         color: white;
-        text-align: center;
-        padding: 1rem;
+        padding: 10px 20px;
       }
       .container {
-        padding: 2rem;
-      }
-      h2 {
-        color: #333;
-      }
-      code {
-        background-color: #e2e2e2;
-        padding: 0.2rem 0.4rem;
-        border-radius: 5px;
-      }
-      pre {
-        background-color: #e2e2e2;
-        padding: 1rem;
-        border-radius: 5px;
-        white-space: pre-wrap;
-        word-wrap: break-word;
+        padding: 20px;
       }
       .endpoint {
-        background-color: #fff;
-        margin-bottom: 1.5rem;
-        padding: 1rem;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
       }
-      .endpoint h3 {
-        margin-top: 0;
+      .method {
+        font-weight: bold;
+        color: #007bff;
       }
-      .response {
-        background-color: #f9f9f9;
-        padding: 1rem;
-        border-left: 5px solid #2196f3;
+      pre {
+        background: #f4f4f4;
+        padding: 10px;
+        border-left: 4px solid #007bff;
       }
     </style>
   </head>
   <body>
     <header>
-      <h1>API Documentation</h1>
+      <h1>API Documentation - Inventory Management</h1>
     </header>
-
     <div class="container">
-      <section class="endpoint">
-        <h3>1. GET /api/inventory</h3>
-        <p>
-          <strong>Deskripsi:</strong> Endpoint ini digunakan untuk mengambil
-          semua data barang yang ada dalam inventaris.
-        </p>
-        <p><strong>URL:</strong> <code>/api/inventory</code></p>
-        <p><strong>Metode HTTP:</strong> <code>GET</code></p>
-        <p>
-          <strong>Request Parameters:</strong> Tidak ada parameter yang
-          diperlukan.
-        </p>
+      <h2>Endpoints</h2>
 
-        <h4>Response:</h4>
-        <div class="response">
-          <p><strong>Status Code:</strong> 200 OK</p>
-          <pre>
-[
-  {
-    "id": 1,
-    "kode_barang": "B001",
-    "nama_barang": "Laptop",
-    "stok": 10,
-    "harga": 15000000
-  },
-  {
-    "id": 2,
-    "kode_barang": "B002",
-    "nama_barang": "Mouse",
-    "stok": 50,
-    "harga": 200000
-  }
-]
-                </pre
-          >
-
-          <p><strong>Status Code:</strong> 500 Internal Server Error</p>
-          <pre>
-{
-  "error": "Deskripsi kesalahan"
-}
-                </pre
-          >
-        </div>
-      </section>
-
-      <section class="endpoint">
-        <h3>2. POST /api/inventory</h3>
-        <p>
-          <strong>Deskripsi:</strong> Endpoint ini digunakan untuk menambahkan
-          data barang baru ke dalam inventaris.
-        </p>
-        <p><strong>URL:</strong> <code>/api/inventory</code></p>
-        <p><strong>Metode HTTP:</strong> <code>POST</code></p>
-
-        <h4>Request Body:</h4>
-        <p>Pastikan request body mencakup data berikut:</p>
-        <ul>
-          <li><code>kode_barang</code> (string): Kode unik untuk barang.</li>
-          <li><code>nama_barang</code> (string): Nama barang.</li>
-          <li><code>stok</code> (integer): Jumlah stok barang.</li>
-          <li><code>harga</code> (integer): Harga per unit barang.</li>
-        </ul>
-
-        <h4>Contoh Request Body:</h4>
+      <div class="endpoint">
+        <h3>GET /api/inventory</h3>
+        <p>Retrieve all items in the inventory.</p>
+        <p><span class="method">Method:</span> GET</p>
+        <p><span class="method">Response:</span></p>
         <pre>
 {
-  "kode_barang": "B003",
-  "nama_barang": "Keyboard",
-  "stok": 30,
-  "harga": 400000
+  "kode_barang": "string",
+  "nama_barang": "string",
+  "stok": number,
+  "harga": number
 }
             </pre
         >
+      </div>
 
-        <h4>Response:</h4>
-        <div class="response">
-          <p><strong>Status Code:</strong> 201 Created</p>
-          <pre>
+      <div class="endpoint">
+        <h3>POST /api/inventory</h3>
+        <p>Add a new item to the inventory.</p>
+        <p><span class="method">Method:</span> POST</p>
+        <p><span class="method">Request Body:</span></p>
+        <pre>
+{
+  "kode_barang": "string",
+  "nama_barang": "string",
+  "stok": number,
+  "harga": number
+}
+            </pre
+        >
+        <p><span class="method">Response:</span></p>
+        <pre>
 {
   "message": "Barang berhasil ditambahkan"
 }
-                </pre
-          >
+            </pre
+        >
+      </div>
 
-          <p><strong>Status Code:</strong> 500 Internal Server Error</p>
-          <pre>
+      <div class="endpoint">
+        <h3>GET /api/inventory/:kode_barang</h3>
+        <p>Retrieve a specific item by its <code>kode_barang</code>.</p>
+        <p><span class="method">Method:</span> GET</p>
+        <p><span class="method">Response:</span></p>
+        <pre>
 {
-  "error": "Deskripsi kesalahan"
+  "kode_barang": "string",
+  "nama_barang": "string",
+  "stok": number,
+  "harga": number
 }
-                </pre
-          >
-        </div>
-      </section>
+            </pre
+        >
+      </div>
 
-      <section>
-        <h2>Error Handling</h2>
-        <ul>
-          <li>
-            <strong>400 Bad Request:</strong> Parameter yang dibutuhkan tidak
-            lengkap atau formatnya salah.
-          </li>
-          <li><strong>404 Not Found:</strong> Endpoint tidak ditemukan.</li>
-          <li>
-            <strong>500 Internal Server Error:</strong> Terjadi kesalahan pada
-            server saat memproses request.
-          </li>
-        </ul>
-      </section>
+      <div class="endpoint">
+        <h3>PUT /api/inventory/:kode_barang</h3>
+        <p>Update an item's details in the inventory.</p>
+        <p><span class="method">Method:</span> PUT</p>
+        <p><span class="method">Request Body:</span></p>
+        <pre>
+{
+  "nama_barang": "string",
+  "stok": number,
+  "harga": number
+}
+            </pre
+        >
+        <p><span class="method">Response:</span></p>
+        <pre>
+{
+  "message": "Barang berhasil diperbarui"
+}
+            </pre
+        >
+      </div>
+
+      <div class="endpoint">
+        <h3>DELETE /api/inventory/:kode_barang</h3>
+        <p>
+          Delete an item from the inventory by its <code>kode_barang</code>.
+        </p>
+        <p><span class="method">Method:</span> DELETE</p>
+        <p><span class="method">Response:</span></p>
+        <pre>
+{
+  "message": "Barang berhasil dihapus"
+}
+            </pre
+        >
+      </div>
+
+      <div class="endpoint">
+        <h3>GET /api/barangkeluar</h3>
+        <p>Retrieve all outgoing items.</p>
+        <p><span class="method">Method:</span> GET</p>
+        <p><span class="method">Response:</span></p>
+        <pre>
+{
+  "kode_barang": "string",
+  "nama_barang": "string",
+  "jumlah": number,
+  "harga": number
+}
+            </pre
+        >
+      </div>
+
+      <div class="endpoint">
+        <h3>POST /api/barangkeluar</h3>
+        <p>Add an outgoing item.</p>
+        <p><span class="method">Method:</span> POST</p>
+        <p><span class="method">Request Body:</span></p>
+        <pre>
+{
+  "kode_barang": "string",
+  "nama_barang": "string",
+  "jumlah": number,
+  "harga": number
+}
+            </pre
+        >
+        <p><span class="method">Response:</span></p>
+        <pre>
+{
+  "message": "Barang berhasil ditambahkan"
+}
+            </pre
+        >
+      </div>
+
+      <div class="endpoint">
+        <h3>PUT /api/edit/barangkeluar/:kode_barang</h3>
+        <p>Update the quantity of an outgoing item.</p>
+        <p><span class="method">Method:</span> PUT</p>
+        <p><span class="method">Request Body:</span></p>
+        <pre>
+{
+  "jumlah": number
+}
+            </pre
+        >
+        <p><span class="method">Response:</span></p>
+        <pre>
+{
+  "message": "Barang berhasil diperbarui"
+}
+            </pre
+        >
+      </div>
+
+      <div class="endpoint">
+        <h3>DELETE /api/hapus/barangkeluar/:kode_barang</h3>
+        <p>Delete an outgoing item by its <code>kode_barang</code>.</p>
+        <p><span class="method">Method:</span> DELETE</p>
+        <p><span class="method">Response:</span></p>
+        <pre>
+{
+  "message": "Barang berhasil dihapus"
+}
+            </pre
+        >
+      </div>
     </div>
   </body>
 </html>

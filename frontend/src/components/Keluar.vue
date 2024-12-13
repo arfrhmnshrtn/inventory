@@ -15,6 +15,7 @@ import { ref, computed } from "vue";
 const db = ref([]);
 const listBarang = ref([]);
 const showModal = ref(false);
+const isEdit = ref(false); // Status untuk membedakan tambah atau edit
 
 const data = ref({
   kode_barang: "",
@@ -79,44 +80,6 @@ async function tambahBarang() {
   }
 }
 
-async function updateBarangKeluar() {
-  try {
-    const response = await fetch(
-      `http://localhost:3000/api/barangkeluar/${data.value.kode_barang}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data.value),
-      }
-    );
-
-    const result = await response.json();
-
-    if (result.message === "Barang berhasil diperbarui") {
-      alertSuccess.value = true;
-      setTimeout(() => {
-        alertSuccess.value = false;
-      }, 5000);
-      // Reset form setelah menambah barang
-      data.value = {
-        kode_barang: "",
-        nama_barang: "",
-        jumlah: "",
-        harga: "",
-      };
-      // Refresh data dari server
-      fetchData();
-    } else {
-      alert(result.message || "Gagal menambah barang.");
-    }
-  } catch (error) {
-    console.error("Error saat menambah barang:", error);
-    alert("Terjadi kesalahan saat mengirim data.");
-  }
-}
-
 async function dataBarangMasuk() {
   try {
     const response = await fetch(`http://localhost:3000/api/databarangmasuk`);
@@ -138,6 +101,77 @@ function pilihBarang(kodeBarang) {
     data.value.nama_barang = barang.nama_barang;
     data.value.harga = barang.harga;
   }
+}
+
+// Update data barang keluar
+// edit item
+function editItem(item) {
+  data.value = { ...item };
+  isEdit.value = true; // Menandakan bahwa kita sedang dalam mode edit
+  showModal.value = true;
+  console.log(data.value);
+}
+
+function updateData() {
+  if (
+    !data.value.kode_barang ||
+    !data.value.nama_barang ||
+    !data.value.jumlah ||
+    !data.value.harga
+  ) {
+    alert("Semua field harus diisi!");
+    return;
+  }
+
+  fetch(
+    `http://localhost:3000/api/edit/barangkeluar/${data.value.kode_barang}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data.value),
+    }
+  )
+    .then((response) => response.json())
+    .then((result) => {
+      console.log(result);
+      isEdit.value = false;
+      if (result.message === "Barang berhasil diperbarui") {
+        showModal.value = false;
+        fetchData();
+      } else {
+        alert("Gagal memperbarui data!");
+      }
+    });
+}
+
+function saveData() {
+  if (isEdit.value) {
+    updateData();
+  } else {
+    tambahBarang();
+  }
+}
+
+// hapus barang keluar
+function deleteItem(kode_barang) {
+  fetch(`http://localhost:3000/api/hapus/barangkeluar/${kode_barang}`, {
+    method: "DELETE",
+  })
+    .then((response) => response.json())
+    .then((result) => {
+      console.log(result);
+      if (result.message === "Barang berhasil dihapus") {
+        fetchData();
+      } else {
+        alert("Gagal menghapus data!");
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      alert("Terjadi kesalahan saat menghapus data.");
+    });
 }
 
 // Data pencarian
@@ -248,11 +282,13 @@ function goToPage(page) {
             <td class="py-2 px-4 border-b border-gray-200 text-center">
               <button
                 class="px-2 py-1 mr-2 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded"
+                @click="editItem(item)"
               >
                 Edit
               </button>
               <button
                 class="px-2 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded"
+                @click="deleteItem(item.kode_barang)"
               >
                 Hapus
               </button>
@@ -337,7 +373,7 @@ function goToPage(page) {
                 </button>
               </div>
               <!-- Modal body -->
-              <form class="p-4 md:p-5" @submit.prevent="tambahBarang">
+              <form class="p-4 md:p-5" @submit.prevent="saveData">
                 <div class="grid gap-4 mb-4 grid-cols-2">
                   <div class="col-span-2">
                     <label
@@ -353,7 +389,7 @@ function goToPage(page) {
                       <option
                         v-for="item in listBarang"
                         :key="item.id"
-                        selected=""
+                        :selected="item.kode_barang === data.kode_barang"
                         :value="item.kode_barang"
                       >
                         {{ item.kode_barang }}
@@ -427,7 +463,7 @@ function goToPage(page) {
                       clip-rule="evenodd"
                     ></path>
                   </svg>
-                  Tambah Barang
+                  {{ isEdit ? "Edit Barang" : "Tambah Barang" }}
                 </button>
               </form>
             </div>

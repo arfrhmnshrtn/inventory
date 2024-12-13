@@ -129,6 +129,34 @@ app.post("/api/barangkeluar", (req, res) => {
   });
 });
 
+//edit barang keluar
+app.put("/api/edit/barangkeluar/:kode_barang", (req, res) => {
+  const { kode_barang } = req.params;
+  const { jumlah } = req.body;
+
+  const sql = "UPDATE barangkeluar SET jumlah = ? WHERE kode_barang = ?";
+  db.query(sql, [jumlah, kode_barang], (err, result) => {
+    if (err) {
+      console.error("Error saat memperbarui barang:", err.message);
+      return res.status(500).json({ error: "Gagal memperbarui barang" });
+    }
+    res.json({ message: "Barang berhasil diperbarui" });
+  });
+});
+
+// hapus barang keluar
+app.delete("/api/hapus/barangkeluar/:kode_barang", (req, res) => {
+  const { kode_barang } = req.params;
+  const sql = "DELETE FROM barangkeluar WHERE kode_barang = ?";
+  db.query(sql, [kode_barang], (err, result) => {
+    if (err) {
+      console.error("Error saat menghapus barang:", err.message);
+      return res.status(500).json({ error: "Gagal menghapus barang" });
+    }
+    res.json({ message: "Barang berhasil dihapus" });
+  });
+});
+
 // Update jumlah barang keluar
 app.put("/api/barangkeluar/:kode_barang", (req, res) => {
   const { kode_barang } = req.params;

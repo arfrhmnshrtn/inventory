@@ -86,6 +86,28 @@ function searchData(value) {
 
   console.log(filterData.value);
 }
+
+// Navigasi halaman
+function goToPage(page) {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+}
+// Pagination setup
+const currentPage = ref(1);
+const itemsPerPage = 10;
+
+// Hitung total halaman
+const totalPages = computed(() =>
+  Math.ceil(filterData.value.length / itemsPerPage)
+);
+
+// Data untuk halaman saat ini
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filterData.value.slice(start, end);
+});
 </script>
 
 <template>
@@ -120,7 +142,7 @@ function searchData(value) {
         </thead>
         <tbody>
           <tr
-            v-for="(item, index) in filterData"
+            v-for="(item, index) in paginatedData"
             :key="item.id"
             class="hover:bg-gray-50"
           >
@@ -144,7 +166,10 @@ function searchData(value) {
       </table>
 
       <!-- Pagination -->
-      <div class="flex justify-between items-center mt-5" v-if="cekBanyakData > 10">
+      <div
+        class="flex justify-between items-center mt-5"
+        v-if="cekBanyakData > 10"
+      >
         <button
           @click="goToPage(currentPage - 1)"
           :disabled="currentPage === 1"

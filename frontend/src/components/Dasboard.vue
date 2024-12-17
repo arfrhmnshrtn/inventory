@@ -13,7 +13,7 @@ async function getDataMasuk() {
   try {
     const response = await fetch(`http://localhost:3000/api/inventory`);
     const data = await response.json();
-    listBarangMasuk.value = data.slice(0, 5);
+    listBarangMasuk.value = data;
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -85,7 +85,10 @@ async function getDataKeluar() {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in listBarangMasuk" :key="index">
+            <tr
+              v-for="(item, index) in listBarangMasuk.slice(0, 5)"
+              :key="index"
+            >
               <td class="py-2 px-4 border-b border-gray-200 text-gray-700">
                 {{ index + 1 }}
               </td>
@@ -122,7 +125,7 @@ async function getDataKeluar() {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in listBarangKeluar" :key="index">
+            <tr v-for="(item, index) in listBarangKeluar.slice(0, 5)" :key="index">
               <td class="py-2 px-4 border-b border-gray-200 text-gray-700">
                 {{ index + 1 }}
               </td>
